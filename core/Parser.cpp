@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "models/Blade.hpp"
 #include <charconv>
 #include <ranges>
 #include <string>
@@ -20,9 +21,11 @@ Move Parser::ParseLine(std::string_view line) {
     return std::nullopt;
   };
   Move m;
+  // In the file Z is the vertical move whereas in our program is the Y
+  // coordinate
   m.x = parseFloat('X');
-  m.y = parseFloat('Y');
-  m.z = parseFloat('Z');
+  m.z = parseFloat('Y');
+  m.y = parseFloat('Z');
 
   return m;
 }
@@ -36,4 +39,9 @@ std::vector<Move> Parser::ParseGCode(std::string gcode) {
                    [](std::string_view line) { return line.contains("G01"); }) |
                std::views::transform(ParseLine);
   return std::vector<Move>(lines.begin(), lines.end());
+}
+
+std::pair<BladeType, float> Parser::ParseFileName(const std::string &name) {
+  return {name[2] == 'f' ? BladeType::FLAT : BladeType::BALL,
+          std::stoi(name.substr(3))};
 }

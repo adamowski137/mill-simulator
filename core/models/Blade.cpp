@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <vector>
 
-Blade::Blade() : Entity(ShaderType::OBJECT, {0.f, 1.f, 0.f}) {
+Blade::Blade() : Entity(ShaderType::OBJECT, {0.f, 1.f, 0.f}), m_height(20.f) {
   glBindVertexArray(m_vao);
   auto vertices = getGrid();
   auto indices = getIndices();
@@ -99,7 +99,13 @@ std::vector<uint16_t> Blade::getIndices() {
   return indices;
 }
 void Blade::recalculateModel() {
-  m_model = math137::MatrixUtils::Translate(
-      m_translation.x(), m_translation.y(), m_translation.z());
+  m_model = math137::MatrixUtils::Translate(m_translation.x() / 10.f,
+                                            m_translation.y() / 10.f,
+                                            m_translation.z() / 10.f);
   m_update = false;
+}
+float Blade::getMillingHeight(float dist2) const {
+  if (m_bladeType == BladeType::FLAT)
+    return m_translation.y();
+  return m_translation.y() - std::sqrt(m_radius * m_radius - dist2) + m_radius;
 }

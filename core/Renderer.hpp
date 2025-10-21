@@ -15,9 +15,12 @@ public:
   void setShader(const ShaderType type);
   void setColor(const math137::Vector4f &color);
   void setDegree(uint8_t degree);
+  void setBlockData(float sizeX, float sizeY, float sizeZ);
+  void setCamerPos(const math137::Vector3f &pos);
 
 private:
   Shader *m_selectedShader;
   Shader m_objectShader;
+  Shader m_blockShader;
   ShaderType m_type;
 };

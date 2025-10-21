@@ -1,0 +1,70 @@
+#version 460 core
+
+layout(local_size_x = 32, local_size_y = 32) in;
+
+// --- Inputs ---
+layout(r32f, binding = 0) uniform image2D heightMap;  // Writable heightmap (float)
+layout(binding = 1) uniform atomic_uint resultBits;
+
+uniform vec3 blockSize;    // (m_sizeX, unused, m_sizeZ)
+uniform ivec2 resolution;  // (m_resX, m_resZ)
+uniform bool ballBlade;
+uniform vec3 bladePos; 
+uniform float bladeRadius;
+uniform float bladeHeight;
+uniform float baseHeight;
+
+// Function that computes the blade surface height given distance²
+float getMillingHeight(float dist2, float radius)
+{
+    // Example: spherical cutter shape
+    // Sphere centered at (0, radius)
+    if (dist2 >= radius * radius)
+        return 1e9; // Outside sphere (no cut)
+    if(ballBlade){
+      float dy = sqrt(radius * radius - dist2);
+      return bladePos.y + radius - dy; // height below tip
+    }
+    return bladePos.y;
+}
+
+void main()
+{
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+    if (id.x >= resolution.x || id.y >= resolution.y)
+        return;
+
+    float stepX = 1.0 / float(resolution.x - 1);
+    float stepZ = 1.0 / float(resolution.y - 1);
+
+    // World position of this heightmap cell (in block-local space)
+    float worldX = id.x * stepX * blockSize.x;
+    float worldZ = id.y * stepZ * blockSize.z;
+
+    float dx = worldX - bladePos.x;
+    float dz = worldZ - bladePos.z;
+    float dist2 = dx * dx + dz * dz;
+
+    if (dist2 <= bladeRadius * bladeRadius)
+    {
+        float newHeight = getMillingHeight(dist2, bladeRadius);
+
+        // Read current height
+        float oldHeight = imageLoad(heightMap, id).r;
+
+        // Remove material (never add)
+        if (newHeight < oldHeight)
+        {
+            imageStore(heightMap, id, vec4(newHeight, 0.0, 0.0, 0.0));
+            atomicCounterOr(resultBits, 1u << 0);
+
+            if(oldHeight - bladePos.y > bladeHeight){
+              atomicCounterOr(resultBits, 1u << 1);
+            }
+            if(newHeight < baseHeight){
+              atomicCounterOr(resultBits, 1u << 2);
+            }
+        }
+    }
+}
+

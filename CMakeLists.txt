@@ -14,9 +14,12 @@ add_executable(${PROJECT_NAME}
   core/Shader.cpp
   core/Parser.cpp
   core/Simulator.cpp
+  core/ComputeShader.cpp
   core/models/Entity.cpp
   core/models/Ground.cpp
   core/models/Blade.cpp
+  core/models/Block.cpp
+  core/models/Path.cpp
 )
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -26,17 +29,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
 add_compile_definitions(_USE_MATH_DEFINES)
 
-set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/shaders")
-set(SHADERS_OUTPUT_DIR "${CMAKE_BINARY_DIR}")
+# Path setup
+set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/shaders)
+set(SHADER_BINARY_DIR ${CMAKE_BINARY_DIR}/shaders)
 
-add_custom_command(
-    OUTPUT ${SHADERS_OUTPUT_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SHADERS_DIR} ${SHADERS_OUTPUT_DIR}
-    COMMENT "Copying shaders to build directory"
+# Create copy rule
+add_custom_target(copy_shaders ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${SHADER_SOURCE_DIR} ${SHADER_BINARY_DIR}
+    COMMENT "Copying shaders to build directory..."
 )
 
-# Custom target to trigger the command
-add_custom_target(copy_shaders ALL DEPENDS ${SHADERS_OUTPUT_DIR})
+# Ensure shaders are copied before your executable runs
+add_dependencies(${PROJECT_NAME} copy_shaders)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/math137)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/glew-cmake)

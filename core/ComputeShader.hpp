@@ -1,20 +1,17 @@
 #pragma once
 
-#include "Matrix.hpp"
 #include "Vector.hpp"
 #include <GL/glew.h>
 #include <cstdint>
 #include <string>
 
-enum class ShaderType { OBJECT, BLOCK };
-
-class Shader {
+class ComputeShader {
 public:
-  Shader(std::string vertexShaderPath, std::string fragmentShaderPath);
-  Shader(std::string vertexShaderPath, std::string fragmentShaderPath,
-         std::string tessalationControlPath,
-         std::string tessalationEvaluationPath);
-  inline void use() const { glUseProgram(m_id); };
+  ComputeShader(const std::string &filePath);
+
+  void use();
+  void execute(uint32_t localX = 1, uint32_t localY = 1, uint32_t localZ = 1);
+  void await(GLbitfield barrier);
 
   inline void setBool(const std::string &name, bool value) const {
     glUniform1i(glGetUniformLocation(m_id, name.c_str()), (int)value);
@@ -27,6 +24,10 @@ public:
   }
   inline void setFloat(const std::string &name, float value) const {
     glUniform1f(glGetUniformLocation(m_id, name.c_str()), value);
+  }
+  inline void setVec2i(const std::string &name,
+                       const math137::Vector<int, 2> &value) const {
+    glUniform2iv(glGetUniformLocation(m_id, name.c_str()), 1, value.data());
   }
   inline void setVec2(const std::string &name,
                       const math137::Vector2f &value) const {
@@ -69,7 +70,5 @@ public:
 
 private:
   void checkCompileErrors(uint32_t shader, std::string type);
-  std::string getShaderCode(std::string filePath);
-
   uint32_t m_id;
 };

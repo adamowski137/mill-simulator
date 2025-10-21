@@ -4,10 +4,18 @@
 #include <cstdint>
 #include <memory>
 
+enum class BladeType { FLAT, BALL };
+
 class Blade : public Entity {
 public:
   Blade();
   void render(const std::unique_ptr<Renderer> &renderer) override;
+  float getMillingHeight(float distanceSq) const;
+  inline float getRadius() const { return m_radius; }
+  inline void setRadius(float radius) { m_radius = radius; }
+  float m_radius;
+  float m_height;
+  BladeType m_bladeType;
 
 protected:
   void recalculateModel() override;
