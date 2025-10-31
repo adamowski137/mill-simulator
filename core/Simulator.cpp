@@ -9,7 +9,7 @@
 
 Simulator::Simulator(Blade &blade, Block &block)
     : m_blade(blade), m_block(block), m_simulate(false), m_speed(1000),
-      m_maxAngle(M_PI_4f) {}
+      m_maxAngle(M_PI_4) {}
 
 void Simulator::setMoves(const std::vector<Move> &moves) {
   m_postions.clear();
@@ -47,18 +47,12 @@ void Simulator::simulate() {
     uint32_t res = m_block.mill(m_blade);
     if ((res & 4) > 0) {
       std::cout << "Mill through base!" << std::endl;
-      m_simulate = false;
-      break;
     }
     if ((res & 2) > 0) {
       std::cout << "Mill with non sharp part" << std::endl;
-      m_simulate = false;
-      break;
     }
     if ((res & 1) > 0 && angle < -m_maxAngle) {
       std::cout << "Milling angle to steep" << std::endl;
-      m_simulate = false;
-      break;
     }
   }
   m_block.setBuffer();
@@ -71,18 +65,12 @@ void Simulator::finish() {
     uint32_t res = m_block.mill(m_blade);
     if ((res & 4) > 0) {
       std::cout << "Mill through base!" << std::endl;
-      m_simulate = false;
-      break;
     }
     if ((res & 2) > 0) {
       std::cout << "Mill with non sharp part" << std::endl;
-      m_simulate = false;
-      break;
     }
     if ((res & 1) > 0 && angle < -m_maxAngle) {
       std::cout << "Milling angle to steep" << std::endl;
-      m_simulate = false;
-      break;
     }
   }
   m_simulate = false;

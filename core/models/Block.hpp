@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#pragma one
 
 class Block : public Entity {
 public:

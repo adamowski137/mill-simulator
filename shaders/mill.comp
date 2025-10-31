@@ -13,17 +13,16 @@ uniform vec3 bladePos;
 uniform float bladeRadius;
 uniform float bladeHeight;
 uniform float baseHeight;
+uniform ivec2 leftBottomPixel;
+uniform ivec2 pixels;
 
-// Function that computes the blade surface height given distance²
 float getMillingHeight(float dist2, float radius)
 {
-    // Example: spherical cutter shape
-    // Sphere centered at (0, radius)
     if (dist2 >= radius * radius)
-        return 1e9; // Outside sphere (no cut)
+        return 1e9;
     if(ballBlade){
       float dy = sqrt(radius * radius - dist2);
-      return bladePos.y + radius - dy; // height below tip
+      return bladePos.y + radius - dy;
     }
     return bladePos.y;
 }
@@ -31,15 +30,20 @@ float getMillingHeight(float dist2, float radius)
 void main()
 {
     ivec2 id = ivec2(gl_GlobalInvocationID.xy);
-    if (id.x >= resolution.x || id.y >= resolution.y)
+    if (id.x >= pixels.x || id.y >= pixels.y)
         return;
 
-    float stepX = 1.0 / float(resolution.x - 1);
-    float stepZ = 1.0 / float(resolution.y - 1);
+    ivec2 texCoord = leftBottomPixel + id;
+    
+    if (texCoord.x < 0 || texCoord.x >= resolution.x || 
+        texCoord.y < 0 || texCoord.y >= resolution.y)
+        return;
 
-    // World position of this heightmap cell (in block-local space)
-    float worldX = id.x * stepX * blockSize.x;
-    float worldZ = id.y * stepZ * blockSize.z;
+    float stepX = blockSize.x / float(resolution.x);
+    float stepZ = blockSize.z / float(resolution.y);
+
+    float worldX = float(texCoord.x) * stepX;
+    float worldZ = float(texCoord.y) * stepZ;
 
     float dx = worldX - bladePos.x;
     float dz = worldZ - bladePos.z;
@@ -50,12 +54,12 @@ void main()
         float newHeight = getMillingHeight(dist2, bladeRadius);
 
         // Read current height
-        float oldHeight = imageLoad(heightMap, id).r;
+        float oldHeight = imageLoad(heightMap, texCoord).r;
 
         // Remove material (never add)
         if (newHeight < oldHeight)
         {
-            imageStore(heightMap, id, vec4(newHeight, 0.0, 0.0, 0.0));
+            imageStore(heightMap, texCoord, vec4(newHeight, 0.0, 0.0, 0.0));
             atomicCounterOr(resultBits, 1u << 0);
 
             if(oldHeight - bladePos.y > bladeHeight){

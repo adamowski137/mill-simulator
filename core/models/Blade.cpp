@@ -1,7 +1,5 @@
 #include "Blade.hpp"
 #include "MatrixUtils.hpp"
-#include <GL/gl.h>
-#include <GL/glext.h>
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -35,7 +33,7 @@ std::vector<float> Blade::getGrid() {
   vertices.reserve((c_segments + 1) * 2 * 3 + 6);
 
   for (uint32_t i = 0; i <= c_segments; ++i) {
-    float theta = (2.f * M_PIf * i) / c_segments;
+    float theta = (2.f * M_PI * i) / c_segments;
     float x = std::cos(theta) * c_radius;
     float z = std::sin(theta) * c_radius;
     vertices.push_back(x);

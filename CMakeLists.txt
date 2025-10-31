@@ -31,7 +31,7 @@ add_compile_definitions(_USE_MATH_DEFINES)
 
 # Path setup
 set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/shaders)
-set(SHADER_BINARY_DIR ${CMAKE_BINARY_DIR}/shaders)
+set(SHADER_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
 
 # Create copy rule
 add_custom_target(copy_shaders ALL
@@ -70,10 +70,10 @@ target_include_directories(math137 PUBLIC external/math137/include)
 target_link_libraries(imgui PRIVATE glfw OpenGL::GL)
 target_link_libraries(ImGuiFileDialog PRIVATE imgui)
 target_link_libraries(${PROJECT_NAME} PRIVATE 
+  math137
   imgui 
-  math137 
   libglew_static 
   OpenGL::GL 
   glfw 
   ImGuiFileDialog
-)
+) 

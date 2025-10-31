@@ -8,7 +8,6 @@
 #include "Vector.hpp"
 #include "Vertex.hpp"
 #include <GL/gl.h>
-#include <GL/glext.h>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -92,12 +91,11 @@ std::vector<VertexNormal> Block::getBorderVertices() {
   std::vector<VertexNormal> res;
   res.resize(2 * (m_resX + m_resZ) + m_resX * m_resZ);
 
-  // Bottom edge (z = 0)
   int i = 0;
   for (int x = 0; x < m_resX; x++) {
     VertexNormal v{};
     v.pos[0] = m_sizeX * 0.1f * x / (m_resX - 1);
-    v.pos[1] = 0.f; // height at bottom edge
+    v.pos[1] = 0.f;
     v.pos[2] = 0.f;
     v.pos[3] = 1.f;
     v.norm[0] = 0.f;
@@ -339,9 +337,35 @@ uint32_t Block::mill(const Blade &blade) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, m_heightTex);
   glBindImageTexture(0, m_heightTex, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+  
   uint32_t groupSize = 32;
-  uint32_t groupsX = (m_resX + groupSize - 1) / groupSize;
-  uint32_t groupsY = (m_resZ + groupSize - 1) / groupSize;
+  
+  float squareSideWorld = 2.0f * radius;
+  
+  float leftBottomX = millPos.x() - radius;
+  float leftBottomZ = millPos.z() - radius;
+  
+  float leftBottomTexX = leftBottomX / m_sizeX;
+  float leftBottomTexZ = leftBottomZ / m_sizeZ;
+  
+  int leftBottomPixelX = (int)(leftBottomTexX * m_resX);
+  int leftBottomPixelZ = (int)(leftBottomTexZ * m_resZ);
+
+  m_millShader.setVec2i("leftBottomPixel",
+                         {leftBottomPixelX, leftBottomPixelZ});
+  
+  int pixelsX = (int)((squareSideWorld / m_sizeX) * m_resX);
+  int pixelsY = (int)((squareSideWorld / m_sizeZ) * m_resZ);
+
+  m_millShader.setVec2i("pixels",
+                         {pixelsX, pixelsY});
+
+  uint32_t groupsX = (pixelsX + groupSize - 1) / groupSize;
+  uint32_t groupsY = (pixelsY + groupSize - 1) / groupSize;
+  
+  groupsX = std::max(1u, groupsX);
+  groupsY = std::max(1u, groupsY);
+  
   m_millShader.execute(groupsX, groupsY);
   m_millShader.await(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT |
                      GL_ATOMIC_COUNTER_BUFFER);

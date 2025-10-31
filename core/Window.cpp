@@ -8,7 +8,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "models/Blade.hpp"
-#include <GL/gl.h>
+#include <sstream>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -35,7 +35,7 @@ Window::Window(uint16_t width, uint16_t height, std::string title)
   m_scene = std::make_unique<Scene>();
 
   m_renderer->setProjection(math137::MatrixUtils::Projection(
-      M_PI_4f, (float)m_width / m_height, 0.1f, 100.f));
+      M_PI_4, (float)m_width / m_height, 0.1f, 100.f));
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -89,20 +89,20 @@ void Window::renderImgui(float dt) {
   ImGui::NewFrame();
   if (ImGui::Button("Load G-Code")) {
     IGFD::FileDialogConfig config;
-    config.path = "../paths/";
+    config.path = "../../paths/";
     ImGuiFileDialog::Instance()->OpenDialog("ImportFile", "Import File", ".*",
                                             config);
   }
   ImGui::Separator();
   static float bladeR = 1.f;
   static float bladeHeight = 20.f;
-  ImGui::SliderFloat("Cutter Radius", &bladeR, 0.5f, 20.f);
+  ImGui::SliderFloat("Cutter diamiter", &bladeR, 0.5f, 20.f);
   ImGui::SliderFloat("Cutter height", &bladeHeight, 1.f, 40.f);
   static const char *cutterType[] = {"Flat", "Ball"};
   static int selected = 0;
   ImGui::Combo("Cutter type", &selected, cutterType, IM_ARRAYSIZE(cutterType));
   if (ImGui::Button("Set cutter")) {
-    m_scene->setBladeData(bladeR, bladeHeight,
+    m_scene->setBladeData(bladeR * 0.5f, bladeHeight,
                           static_cast<BladeType>(selected));
   }
   ImGui::Separator();
@@ -119,11 +119,11 @@ void Window::renderImgui(float dt) {
   }
   ImGui::Separator();
   static int speed = 10;
-  static float angle = M_PI_4f;
+  static float angle = M_PI_4;
   if (ImGui::InputInt("speed", &speed)) {
     m_scene->setSimulatorSpeed(speed);
   }
-  if (ImGui::SliderFloat("MaxAngle", &angle, 0.0f, M_PI_2f)) {
+  if (ImGui::SliderFloat("MaxAngle", &angle, 0.0f, M_PI_2)) {
     m_scene->setMaxAngle(angle);
   }
   if (ImGui::Button("Start simulation")) {
@@ -140,13 +140,13 @@ void Window::renderImgui(float dt) {
       std::ifstream input(filePath);
       std::stringstream ss;
       ss << input.rdbuf();
-      auto res = Parser::ParseGCode(std::move(ss.str()));
+      auto res = Parser::ParseGCode(ss.str());
       m_scene->setSimulatorMoves(res);
       std::pair<BladeType, float> tf = Parser::ParseFileName(
           ImGuiFileDialog::Instance()->GetCurrentFileName());
       bladeR = tf.second;
       selected = static_cast<int>(tf.first);
-      m_scene->setBladeRadius(tf.second);
+      m_scene->setBladeRadius(tf.second * 0.5f);
       m_scene->setBladeType(tf.first);
     }
 
@@ -190,6 +190,6 @@ void Window::scrollInputCallback(GLFWwindow *window, double xOffset,
   if (ImGui::GetIO().WantCaptureMouse)
     return;
   Window *w = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
-  w->m_camera.changeDistance(0.08f * yOffset);
+  w->m_camera.changeDistance(0.8f * yOffset);
 }
 void Window::resizeWindowCallback(GLFWwindow *window, int width, int height) {}

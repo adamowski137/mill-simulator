@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <iostream>
 
 Move Parser::ParseLine(std::string_view line) {
   auto parseFloat = [&](char prefix) -> std::optional<float> {
@@ -33,6 +34,8 @@ Move Parser::ParseLine(std::string_view line) {
 std::vector<Move> Parser::ParseGCode(std::string gcode) {
   auto lines = gcode | std::views::split('\n') |
                std::views::transform([](auto &&r) {
+                if(r.empty())
+                    return std::string_view{};
                  return std::string_view(&*r.begin(), std::ranges::distance(r));
                }) |
                std::views::filter(
@@ -43,5 +46,5 @@ std::vector<Move> Parser::ParseGCode(std::string gcode) {
 
 std::pair<BladeType, float> Parser::ParseFileName(const std::string &name) {
   return {name[2] == 'f' ? BladeType::FLAT : BladeType::BALL,
-          std::stoi(name.substr(3))};
+          static_cast<float>(std::stoi(name.substr(3)))};
 }
